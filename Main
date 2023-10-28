@@ -1,0 +1,112 @@
+public class Aluno {
+    private int matricula;
+    private String nome;
+    private int idade;
+
+    // Getters e setters (métodos de acesso)
+    public int getMatricula() {
+        return matricula;
+    }
+
+    public void setMatricula(int matricula) {
+        this.matricula = matricula;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public int getIdade() {
+        return idade;
+    }
+
+    public void setIdade(int idade) {
+        this.idade = idade;
+    }
+}
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class AlunoDAO {
+    private Connection conexao;
+
+    public AlunoDAO(Connection conexao) {
+        this.conexao = conexao;
+    }
+
+    public void inserir(Aluno aluno) {
+        String sql = "INSERT INTO alunos (nome, idade) VALUES (?, ?)";
+        try (PreparedStatement stmt = conexao.prepareStatement(sql)) {
+            stmt.setString(1, aluno.getNome());
+            stmt.setInt(2, aluno.getIdade());
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<Aluno> listar() {
+        List<Aluno> alunos = new ArrayList<>();
+        String sql = "SELECT matricula, nome, idade FROM alunos";
+        try (PreparedStatement stmt = conexao.prepareStatement(sql); ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                Aluno aluno = new Aluno();
+                aluno.setMatricula(rs.getInt("matricula"));
+                aluno.setNome(rs.getString("nome"));
+                aluno.setIdade(rs.getInt("idade"));
+                alunos.add(aluno);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return alunos;
+    }
+}
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class ConexaoBancoDados {
+    public static Connection obterConexao() {
+        try {
+            String url = "#############PRIVADO#############";
+            String usuario = "#############PRIVADO#############";
+            String senha = "#############PRIVADO#############";
+            return DriverManager.getConnection(url, usuario, senha);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+}
+
+import java.sql.Connection;
+
+public class Main {
+    public static void main(String[] args) {
+        Connection conexao = ConexaoBancoDados.obterConexao();
+        AlunoDAO alunoDAO = new AlunoDAO(conexao);
+
+        // Inserir um aluno
+        Aluno novoAluno = new Aluno();
+        novoAluno.setNome("João");
+        novoAluno.setIdade(20);
+        alunoDAO.inserir(novoAluno);
+
+        // Listar alunos
+        System.out.println("Lista de Alunos:");
+        for (Aluno aluno : alunoDAO.listar()) {
+            System.out.println("Matricula: " + aluno.getMatricula() + ", Nome: " + aluno.getNome() + ", Idade: " + aluno.getIdade());
+        }
+    }
+}
